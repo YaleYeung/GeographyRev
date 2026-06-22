@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,23 +73,53 @@
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        /* Custom print-specific stylesheet overrides */
+        /* Custom print-specific stylesheet overrides to guarantee multi-page output */
         @media print {
-            body {
-                background: white !important;
-                overflow: visible !important;
-            }
+            /* Hide print button header and lock screen */
             .no-print {
                 display: none !important;
             }
+            
+            /* Crucial: Break screen bounds and viewport clipping */
+            html, body, #mainReader {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                overflow-y: visible !important;
+                background: white !important;
+                color: black !important;
+                display: block !important;
+                position: relative !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Document container reset */
+            #documentWrapper {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Format individual pages for the printing paper */
             .pdf-page {
                 box-shadow: none !important;
                 margin: 0 !important;
-                padding: 1.2in 1in !important;
-                page-break-after: always;
+                padding: 1in !important; /* Perfect academic margins */
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
                 border: none !important;
                 max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
                 display: block !important;
+            }
+
+            /* Force color adjustment settings in modern browsers */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
     </style>
@@ -140,10 +170,32 @@
     </div>
 
     <!-- Scrollable Document Reader (initially hidden) -->
-    <div id="mainReader" class="hidden h-screen overflow-y-auto flex flex-col items-center py-8 px-4 bg-zinc-200">
+    <div id="mainReader" class="hidden h-screen overflow-y-auto flex flex-col items-center bg-zinc-200">
         
+        <!-- Sticky Print Utility Header -->
+        <header class="no-print sticky top-0 w-full bg-white border-b border-zinc-300 shadow-sm px-6 py-4 mb-8 flex items-center justify-between z-40">
+            <div class="flex items-center space-x-3">
+                <span class="p-1.5 bg-emerald-100 rounded text-emerald-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-13.32 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </span>
+                <div>
+                    <h2 class="text-sm font-bold text-zinc-800 leading-tight">Climate_Change_Notes.pdf</h2>
+                    <p class="text-[10px] text-zinc-500">Verified Secure Document</p>
+                </div>
+            </div>
+            
+            <button onclick="window.print()" class="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                <span>Print Notes / Save as PDF</span>
+            </button>
+        </header>
+
         <!-- Document Content Wrapper -->
-        <div class="w-full max-w-[850px] flex flex-col items-center">
+        <div id="documentWrapper" class="w-full max-w-[850px] flex flex-col items-center px-4 pb-12">
 
             <!-- ==================== PAGE 1 ==================== -->
             <article class="pdf-page p-10 sm:p-14 border border-zinc-300">
@@ -453,7 +505,7 @@
                     <tbody>
                         <tr class="border-b border-zinc-200">
                             <td class="p-2 font-bold text-zinc-800">Greenhouse Effect</td>
-                            <td class="p-2 text-zinc-600">Natural process where atmospheric gases trap outgoing heat, keeping the planet warm.</td>
+                            <td class="p-2 text-zinc-600">Natural process where atmospheric gases trap outgoing heat, warming the planet.</td>
                         </tr>
                         <tr class="border-b border-zinc-200">
                             <td class="p-2 font-bold text-zinc-800">Carbon Sink</td>
@@ -527,4 +579,3 @@
 </body>
 </html>
 
-```
