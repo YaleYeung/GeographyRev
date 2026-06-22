@@ -1,0 +1,528 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Change Notes - Secure Viewer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        zinc: {
+                            950: '#09090b',
+                        }
+                    },
+                    aspectRatio: {
+                        'a4': '1 / 1.414'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars for a clean PDF look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Pure PDF Paper Simulation */
+        .pdf-page {
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 850px;
+        }
+
+        /* Shaking animation on wrong password */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* Clean smooth transitions */
+        .transition-lock {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* Custom print-specific stylesheet overrides */
+        @media print {
+            body {
+                background: white !important;
+                overflow: visible !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .pdf-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 1.2in 1in !important;
+                page-break-after: always;
+                border: none !important;
+                max-width: 100% !important;
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-zinc-100 font-sans text-zinc-800 min-h-screen overflow-hidden">
+
+    <!-- Password Screen Overlay -->
+    <div id="lockScreen" class="no-print fixed inset-0 z-50 flex items-center justify-center bg-zinc-950 px-4 transition-lock">
+        <!-- Abstract Glow Background Shapes -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-900/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <!-- Verification Box -->
+        <div id="authCard" class="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl relative">
+            
+            <!-- Icon Indicator -->
+            <div class="flex justify-center mb-6">
+                <div class="p-3.5 bg-zinc-800/80 rounded-full border border-zinc-700/60 shadow-inner">
+                    <svg id="lockIcon" class="w-7 h-7 text-emerald-500 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="text-center mb-6">
+                <h1 class="text-xl font-bold text-zinc-100 tracking-tight">
+			Locked	Document</h1>
+                <p class="text-sm text-zinc-400 mt-1.5">This is a firewall built by the penguin to ensure the safety and prevention of leaking to the public/ others</p>
+            </div>
+
+            <!-- Form -->
+            <form id="authForm" onsubmit="handleVerification(event)" class="space-y-4">
+                <div>
+                    <label for="passwordInput" class="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Document Key</label>
+                    <input type="password" id="passwordInput" placeholder="••••••••" 
+                           class="w-full px-4 py-3 bg-zinc-950 border border-zinc-850 focus:border-emerald-600 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all text-center tracking-widest font-semibold">
+                </div>
+
+                <!-- Custom inline error alert placeholder -->
+                <div id="errorMessage" class="hidden text-xs text-red-500 font-medium text-center">
+                    Incorrect password. Please try again.
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl tracking-wide transition shadow-lg shadow-emerald-950/40">
+                    Verify & Unlock
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scrollable Document Reader (initially hidden) -->
+    <div id="mainReader" class="hidden h-screen overflow-y-auto flex flex-col items-center py-8 px-4 bg-zinc-200">
+        
+        <!-- Document Content Wrapper -->
+        <div class="w-full max-w-[850px] flex flex-col items-center">
+
+            <!-- ==================== PAGE 1 ==================== -->
+            <article class="pdf-page p-10 sm:p-16 border border-zinc-300">
+                <!-- Academic Header Accent -->
+                <div class="flex justify-between items-center pb-3 mb-8 border-b border-zinc-300 text-zinc-400 text-xs tracking-wider">
+                    <span>CLIMATE CHANGE NOTES</span>
+                    <span>PAGE 1</span>
+                </div>
+
+                <h1 class="text-3xl font-black text-zinc-900 border-b-2 border-emerald-600 pb-2 mb-6">What is Climate Change?</h1>
+                
+                <p class="text-sm leading-relaxed text-zinc-700 mb-6">
+                    <strong>Climate change</strong> refers to <strong>significant long-term changes</strong> in climatic patterns. These changes can be caused by:
+                </p>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-zinc-600 mb-8">
+                    <li><strong>Natural processes</strong>: (e.g., occurrence of an ice age related to cyclical changes in Earth-Sun distance)</li>
+                    <li><strong>Human-induced factors</strong>: currently the dominant cause of contemporary warming cycles.</li>
+                </ul>
+
+                <h2 class="text-lg font-bold text-zinc-900 mb-3 mt-6">Future Scenarios (IPCC Projections)</h2>
+                
+                <h3 class="text-xs font-bold text-zinc-800 uppercase tracking-wider mb-2">1. Temperature Changes</h3>
+                <p class="text-sm text-zinc-600 mb-4 leading-relaxed">
+                    The Intergovernmental Panel on Climate Change (IPCC) uses computer models to project climate scenarios. By the end of the 21st century, global mean temperatures are likely to increase by more than <strong class="text-red-600">1.5°C</strong>. 
+                </p>
+                <p class="text-sm text-zinc-600 mb-6 leading-relaxed">
+                    High-latitude regions may experience a much larger increase compared to tropical regions. For example, the Arctic region shows increases of 7–11°C, while equatorial regions exhibit smaller shifts.
+                </p>
+
+                <h3 class="text-xs font-bold text-zinc-800 uppercase tracking-wider mb-2">2. Rainfall Changes</h3>
+                <p class="text-sm text-zinc-600 mb-6 leading-relaxed">
+                    Global rainfall patterns will become more extreme with larger regional differences:
+                </p>
+                <ul class="list-disc pl-5 space-y-1.5 text-xs text-zinc-600 mb-8">
+                    <li><strong>High-latitude regions</strong>: May receive more rainfall.</li>
+                    <li><strong>Mid-latitude regions</strong>: (e.g., southern Europe, Mediterranean) May receive less rainfall.</li>
+                    <li><strong>Low-latitude regions</strong>: (e.g., Central America, northern South America) May receive less rainfall.</li>
+                    <li>Extreme rainfall events may become more intense and more frequent.</li>
+                </ul>
+
+                <h2 class="text-lg font-bold text-zinc-900 mb-3">Conceptual Variations</h2>
+                <table class="w-full text-left border-collapse text-xs mb-4">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2.5 font-bold text-zinc-800 w-1/4">Metric</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Greenhouse Effect</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Global Warming</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Climate Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 font-bold text-zinc-800">Cause</td>
+                            <td class="p-2.5 text-zinc-600">Natural phenomenon</td>
+                            <td class="p-2.5 text-zinc-600">Increased concentrations of greenhouse gases</td>
+                            <td class="p-2.5 text-zinc-600">Increased concentrations of greenhouse gases</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 font-bold text-zinc-800">Effect</td>
+                            <td class="p-2.5 text-zinc-600">The Earth is kept warm</td>
+                            <td class="p-2.5 text-zinc-600">Increase in global temperature</td>
+                            <td class="p-2.5 text-zinc-600">Long-term changes in temperature, rainfall and other weather elements</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+
+            <!-- ==================== PAGE 2 ==================== -->
+            <article class="pdf-page p-10 sm:p-16 border border-zinc-300">
+                <div class="flex justify-between items-center pb-3 mb-8 border-b border-zinc-300 text-zinc-400 text-xs tracking-wider">
+                    <span>CLIMATE CHANGE NOTES</span>
+                    <span>PAGE 2</span>
+                </div>
+
+                <h2 class="text-2xl font-black text-zinc-900 border-b-2 border-emerald-600 pb-2 mb-6">Human Activities</h2>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-6">
+                    The IPCC reports that human activities are very likely the major causes of modern climate change.
+                </p>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2">1. Use of Fossil Fuels</h3>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-4">
+                    Since the 1960s, fossil fuels (coal, oil, natural gas) have been our major energy source. Extraction and burning of fossil fuels emit large amounts of greenhouse gases, primarily used for power generation and transport. 
+                </p>
+
+                <h4 class="text-xs font-bold text-zinc-700 uppercase mb-2">Carbon Emissions by Transport Type (per km)</h4>
+                <table class="w-full text-left border-collapse text-xs mb-6">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2.5 font-bold text-zinc-800">Transport Type</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Carbon Emissions (grams)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 text-zinc-600">Container ship</td>
+                            <td class="p-2.5 text-zinc-600 font-semibold">3 g</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 text-zinc-600">Rail</td>
+                            <td class="p-2.5 text-zinc-600 font-semibold">18 g</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 text-zinc-600">Truck</td>
+                            <td class="p-2.5 text-zinc-600 font-semibold">47 g</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200 bg-red-50/50">
+                            <td class="p-2.5 text-red-950 font-bold">Plane</td>
+                            <td class="p-2.5 text-red-600 font-bold">560 g</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="border-l-4 border-emerald-600 bg-emerald-50/40 p-4 rounded mb-6 text-xs italic text-zinc-700">
+                    "A one-way flight from New York to Berlin produces half as much carbon dioxide as an Indian produces in a year."
+                </div>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2">2. Farming Activities</h3>
+                
+                <h4 class="text-xs font-bold text-zinc-800 uppercase mb-1">a. Opening Up Farmland</h4>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-3">
+                    Trees are important carbon sinks, absorbing CO₂ through photosynthesis. Massive clearance of forests means fewer trees to absorb excess gas. Additionally, burning vegetation to clear land releases massive amounts of CO₂ back into the atmosphere.
+                </p>
+
+                <h4 class="text-xs font-bold text-zinc-800 uppercase mb-1">b. Pastoral Farming</h4>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-3">
+                    Commercial pastoral farming emits large quantities of methane (CH₄) and nitrous oxide (N₂O). In cattle rearing, CH₄ is produced through digestion and manure decomposition. CH₄ is 25 times more potent than CO₂ in absorbing heat.
+                </p>
+
+                <h4 class="text-xs font-bold text-zinc-800 uppercase mb-1">c. Chemical Fertilisers</h4>
+                <p class="text-sm text-zinc-600 leading-relaxed">
+                    Chemical fertilisers decompose and release nitrous oxide, increasing the warming potential of agricultural soils.
+                </p>
+            </article>
+
+            <!-- ==================== PAGE 3 ==================== -->
+            <article class="pdf-page p-10 sm:p-16 border border-zinc-300">
+                <div class="flex justify-between items-center pb-3 mb-8 border-b border-zinc-300 text-zinc-400 text-xs tracking-wider">
+                    <span>CLIMATE CHANGE NOTES</span>
+                    <span>PAGE 3</span>
+                </div>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2">3. Industrial Activities</h3>
+                
+                <h4 class="text-xs font-bold text-zinc-800 uppercase mb-1">a. Cement Production</h4>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-3">
+                    The cement industry is a major source of greenhouse gases. Demand has soared alongside rapid global urbanization. Cement production releases large amounts of CO₂ directly during chemical processing.
+                </p>
+                <p class="text-xs text-zinc-500 mb-4 leading-relaxed">
+                    <strong>2015 Emissions Context</strong>: Cement industry operations generated roughly 8% of global carbon emissions, while total country shares placed China at 29% and the USA at 14%.
+                </p>
+
+                <h4 class="text-xs font-bold text-zinc-800 uppercase mb-1">b. Refrigerant and Aerosol Production</h4>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-3">
+                    Manufacturing of refrigerants and aerosols historically introduced chlorofluorocarbons (CFCs). These man-made gases are exceptionally powerful heat absorbers, retaining 4,600 times more heat than CO₂. They can remain in the atmosphere for up to 45 years.
+                </p>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2 mt-6">4. Waste Treatment</h3>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-4">
+                    Billions of tonnes of solid waste are generated annually. The primary disposal pathways, landfilling and incineration, both emit substantial CO₂. Furthermore, landfills produce high concentrations of methane as organic components decompose anaerobically.
+                </p>
+                <div class="p-3 bg-red-50/50 rounded border border-red-100 text-xs text-red-950 mb-6">
+                    <strong>Waste Forecast:</strong> Global waste production is projected to increase by 70% between 2016 and 2050 (growing from 2 billion to 3.4 billion tonnes).
+                </div>
+
+                <h4 class="text-xs font-bold text-zinc-700 uppercase mb-2">Emission Matrix Overview</h4>
+                <table class="w-full text-left border-collapse text-xs mb-4">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2 font-bold text-zinc-800 w-1/2">Human Activities</th>
+                            <th class="p-2 font-bold text-zinc-800">Greenhouse Gases Produced</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 text-zinc-600">Power generation and transport (fossil fuels)</td>
+                            <td class="p-2 text-zinc-600 font-semibold">Carbon dioxide (CO₂)</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 text-zinc-600">Farming (deforestation, pastoral, chemical fertilisers)</td>
+                            <td class="p-2 text-zinc-600 font-semibold">Methane (CH₄), Nitrous oxide (N₂O)</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 text-zinc-600">Industrial activity (cement, cooling systems, aerosols)</td>
+                            <td class="p-2 text-zinc-600 font-semibold">Nitrous oxide (N₂O), CFCs</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 text-zinc-600">Waste treatment (landfilling, incineration)</td>
+                            <td class="p-2 text-zinc-600 font-semibold">Methane (CH₄), Carbon dioxide (CO₂)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+
+            <!-- ==================== PAGE 4 ==================== -->
+            <article class="pdf-page p-10 sm:p-16 border border-zinc-300">
+                <div class="flex justify-between items-center pb-3 mb-8 border-b border-zinc-300 text-zinc-400 text-xs tracking-wider">
+                    <span>CLIMATE CHANGE NOTES</span>
+                    <span>PAGE 4</span>
+                </div>
+
+                <h2 class="text-2xl font-black text-zinc-900 border-b-2 border-emerald-600 pb-2 mb-6">Regional Climates</h2>
+                
+                <h3 class="text-base font-bold text-zinc-900 mb-2">1. Climate Shifts in Hong Kong</h3>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-4">
+                    Hong Kong is affected by rising local emissions as well as rapid industrial development in the surrounding Zhujiang (Pearl River) Delta region.
+                </p>
+                <ul class="list-disc pl-5 text-sm text-zinc-600 space-y-1.5 mb-6">
+                    <li><strong>Local Emission Growth</strong>: Hong Kong's CO₂ output rose from 1.3 million tonnes in 1950 to 41.5 million tonnes in 2019—a 31.9-fold increase.</li>
+                    <li><strong>Power Sector Impact</strong>: Generating electricity by burning coal and natural gas accounts for 65.7% of total local emissions.</li>
+                    <li><strong>Transport Sector</strong>: At 18.1%, transport is the second largest emitter due to high traffic volumes and growing vehicle ownership.</li>
+                </ul>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2">2. Urban Heat Island Effect</h3>
+                <p class="text-sm text-zinc-600 leading-relaxed mb-4">
+                    The Urban Heat Island effect means cities are warmer than surrounding rural areas. Built structures trap heat, and built-up areas cool down more slowly. In Hong Kong, this is especially pronounced near Victoria Harbour and in densely built new towns.
+                </p>
+
+                <h4 class="text-xs font-bold text-zinc-700 uppercase mb-2">Comparison: Urban vs. Rural Areas</h4>
+                <table class="w-full text-left border-collapse text-xs mb-6">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2 font-bold text-zinc-800">Factors</th>
+                            <th class="p-2 font-bold text-zinc-800">Urban Areas</th>
+                            <th class="p-2 font-bold text-zinc-800">Rural Areas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-semibold text-zinc-800">Structural Density</td>
+                            <td class="p-2 text-zinc-600">Tall, closely spaced buildings block wind and trap heat.</td>
+                            <td class="p-2 text-zinc-600">Sparsely distributed buildings allow heat to disperse easily.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-semibold text-zinc-800">Surface Cover</td>
+                            <td class="p-2 text-zinc-600">Paved concrete and asphalt absorb and store solar energy.</td>
+                            <td class="p-2 text-zinc-600">Soil and vegetation cool the air through transpiration.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-semibold text-zinc-800">Waste Heat</td>
+                            <td class="p-2 text-zinc-600">Air conditioners and vehicles generate high levels of waste heat.</td>
+                            <td class="p-2 text-zinc-600">Minimal traffic and building density produce little waste heat.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-base font-bold text-zinc-900 mb-2">3. Natural Environment Impacts</h3>
+                <ul class="list-disc pl-5 text-sm text-zinc-600 space-y-2 mb-4">
+                    <li><strong>Melting Cryosphere</strong>: Glacier retreat exposes darker ground beneath, which absorbs more solar energy. This forms a warming feedback loop. Arctic sea ice shrank at an average rate of 13% per decade between 1981 and 2010.</li>
+                    <li><strong>Rising Sea Levels</strong>: Warming seawater expands, and melting glaciers add fresh water to the oceans.</li>
+                </ul>
+            </article>
+
+            <!-- ==================== PAGE 5 ==================== -->
+            <article class="pdf-page p-10 sm:p-16 border border-zinc-300">
+                <div class="flex justify-between items-center pb-3 mb-8 border-b border-zinc-300 text-zinc-400 text-xs tracking-wider">
+                    <span>CLIMATE CHANGE NOTES</span>
+                    <span>PAGE 5</span>
+                </div>
+
+                <h2 class="text-xl font-bold text-zinc-900 border-b-2 border-emerald-600 pb-2 mb-4">Human & Global Response</h2>
+                
+                <h3 class="text-sm font-bold text-zinc-800 uppercase tracking-wider mb-2">Impacts on Human Societies</h3>
+                <ul class="list-disc pl-5 text-xs text-zinc-600 space-y-2 mb-6">
+                    <li><strong>Water Shortage</strong>: Shifting rainfall patterns threaten water security, particularly in semi-arid areas.</li>
+                    <li><strong>Farming Declines</strong>: Longer growing seasons at high latitudes offer a short-term benefit, but droughts, storms, and pests are projected to reduce overall global crop yields in the long term.</li>
+                    <li><strong>Loss of Homes</strong>: Sea-level rise and severe storms threaten coastal cities and low-lying islands, creating climate refugees.</li>
+                    <li><strong>Health Risks</strong>: Warmer temperatures help infectious diseases spread into new areas, and heat waves pose direct risks to human health.</li>
+                </ul>
+
+                <h3 class="text-sm font-bold text-zinc-800 uppercase tracking-wider mb-2">Mitigation and Adaptation</h3>
+                <table class="w-full text-left border-collapse text-xs mb-6">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2.5 font-bold text-zinc-800 w-1/4">Strategy</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Mainland China</th>
+                            <th class="p-2.5 font-bold text-zinc-800">Hong Kong SAR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 font-bold text-zinc-800">Mitigation</td>
+                            <td class="p-2.5 text-zinc-600">Expanding wind, hydro, and solar energy; closing high-emission factories; large-scale afforestation.</td>
+                            <td class="p-2.5 text-zinc-600">Phasing out coal in favor of natural gas and zero-carbon nuclear imports; promoting green building codes.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2.5 font-bold text-zinc-800">Adaptation</td>
+                            <td class="p-2.5 text-zinc-600">Building large-scale dykes and dams (e.g., Three Gorges Dam) to protect against major river floods.</td>
+                            <td class="p-2.5 text-zinc-600">Constructing deep drainage tunnels and underground storage reservoirs (e.g., Tai Hang Tung).</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="text-sm font-bold text-zinc-800 uppercase tracking-wider mb-2">Scientific Glossary</h3>
+                <table class="w-full text-left border-collapse text-[10px] mb-4">
+                    <thead>
+                        <tr class="bg-zinc-50 border-b border-zinc-300">
+                            <th class="p-2 font-bold text-zinc-800 w-1/4">Term</th>
+                            <th class="p-2 font-bold text-zinc-800">Scientific Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-bold text-zinc-800">Greenhouse Effect</td>
+                            <td class="p-2 text-zinc-600">A natural process where atmospheric gases trap outgoing heat, warming the planet.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-bold text-zinc-800">Global Warming</td>
+                            <td class="p-2 text-zinc-600">The gradual rise in average global temperatures, driven by human-induced greenhouse gas emissions.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-bold text-zinc-800">Carbon Sink</td>
+                            <td class="p-2 text-zinc-600">A natural system (such as a forest) that absorbs and stores carbon dioxide from the atmosphere.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-bold text-zinc-800">Urban Heat Island</td>
+                            <td class="p-2 text-zinc-600">A microclimatic effect where cities are warmer than surrounding rural areas due to human activity and built structures.</td>
+                        </tr>
+                        <tr class="border-b border-zinc-200">
+                            <td class="p-2 font-bold text-zinc-800">Coral Bleaching</td>
+                            <td class="p-2 text-zinc-600">The loss of symbiotic algae from coral reefs due to rising sea temperatures, leaving the coral fragile.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+
+        </div>
+    </div>
+
+    <!-- Script Processing -->
+    <script>
+        function handleVerification(event) {
+            event.preventDefault();
+            
+            const passwordInput = document.getElementById('passwordInput');
+            const lockScreen = document.getElementById('lockScreen');
+            const mainReader = document.getElementById('mainReader');
+            const errorMessage = document.getElementById('errorMessage');
+            const authCard = document.getElementById('authCard');
+            const lockIcon = document.getElementById('lockIcon');
+
+            // Set the security password keys here
+            const masterPasscode = "penguinTheScholar";
+
+            if (passwordInput.value.trim() === masterPasscode) {
+                // Correct password actions
+                errorMessage.classList.add('hidden');
+                passwordInput.blur();
+                
+                // Animate lock opening
+                lockIcon.classList.add('text-emerald-400', 'scale-110');
+                lockIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>`;
+                
+                // Transition sequences
+                setTimeout(() => {
+                    lockScreen.classList.add('opacity-0', 'pointer-events-none');
+                    lockScreen.style.transform = "scale(1.05)";
+                    mainReader.classList.remove('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                }, 400);
+
+                setTimeout(() => {
+                    lockScreen.remove(); // Clean up from memory
+                }, 900);
+
+            } else {
+                // Incorrect password actions
+                errorMessage.classList.remove('hidden');
+                authCard.classList.add('shake');
+                passwordInput.value = "";
+                passwordInput.focus();
+                
+                // Remove shake class so it can be re-triggered
+                setTimeout(() => {
+                    authCard.classList.remove('shake');
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
+
+```
